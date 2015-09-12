@@ -29,7 +29,10 @@ int ReadSRTM(char *filename)
 {
 	int x, y, infile, byte=0, bytes_read;
 	unsigned char error, buffer[2];
-	char north[3], west[4], *base=NULL, blw_filename[255];
+	char north[3], west[4], *base=NULL, blw_filename[255], hdr_filename[255];
+	int rows=-1, cols=-1;
+	char header_str[80];
+        unsigned char header_field[64];
 	double cell_size, deg_north, deg_west;
 	FILE *fd=NULL;
 
@@ -125,8 +128,8 @@ int ReadSRTM(char *filename)
 
 				if ((cell_size<0.0008) || (cell_size>0.0009))
 				{
-					printf("\n*** .BIL file's cell size is incompatible with SPLAT!!\n");
-					exit(1);
+					printf("\n*** Warning! .BIL file's cell size is incompatible with SPLAT!!\n");
+					//					exit(1);
 				}
 
 				fscanf(fd,"%lf",&deg_west);
@@ -154,6 +157,39 @@ int ReadSRTM(char *filename)
 				min_west=0;
 
 			max_west=min_west+1;
+		}
+
+		strncpy(hdr_filename,filename,250);
+		x=strlen(filename);
+
+		if (x>4)
+		{
+			hdr_filename[x-3]='h';
+			hdr_filename[x-2]='d';
+			hdr_filename[x-1]='r';
+			hdr_filename[x]=0;
+
+			fd=fopen(hdr_filename,"rb");
+
+			if (fd!=NULL)
+			{
+			  
+			  while (rows == -1 || cols == -1)
+			  {
+			    int val;
+			    fscanf(fd,"%s %d",header_str, &val);
+			    if (strcmp(header_str, "NROWS") == 0)
+			    {
+			      rows = val;
+			    }
+			    else if (strcmp(header_str, "NCOLS") == 0)
+			    {
+			      cols = val;
+			    }
+				   
+			  }
+			  fclose(fd);
+			}
 		}
 	}
 
@@ -187,8 +223,8 @@ int ReadSRTM(char *filename)
 	printf("Reading %s... ", filename);
 	fflush(stdout);
 
-	for (x=0; (x<=ippd && error==0); x++)
-		for (y=0; (y<=ippd && error==0); y++)
+	for (x=0; (x<=(cols - 1) && error==0); x++)
+          for (y=0; (y<=(rows -1) && error==0); y++)
 		{
 			bytes_read=read(infile,&buffer,2);
 

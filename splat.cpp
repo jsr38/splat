@@ -62,7 +62,8 @@
 	#define ARRAYSIZE 76810
 	#endif
 
-	#define IPPD 1200
+	#define IPPDX 1200
+	#define IPPDY 1200
 #endif
 
 #if HD_MODE==1
@@ -98,7 +99,8 @@
 	#define ARRAYSIZE 230430
 	#endif
 
-	#define IPPD 3600
+	#define IPPDX 1800
+	#define IPPDY 3600
 #endif
 
 #ifndef PI
@@ -123,10 +125,10 @@
 char 	string[255], sdf_path[255], opened=0, gpsav=0, splat_name[10],
 	splat_version[6], dashes[80], olditm;
 
-double	earthradius, max_range=0.0, forced_erp=-1.0, dpp, ppd,
+double	earthradius, max_range=0.0, forced_erp=-1.0, dppx, dppy, ppdx, ppdy,
 	fzone_clearance=0.6, forced_freq, clutter;
 
-int	min_north=90, max_north=-90, min_west=360, max_west=-1, ippd, mpi,
+int	min_north=90, max_north=-90, min_west=360, max_west=-1, ippdx, ippdy, mpix, mpiy,
 	max_elevation=-32768, min_elevation=32768, bzerror, contour_threshold;
 
 unsigned char got_elevation_pattern, got_azimuth_pattern, metric=0, dbm=0, smooth_contours=0;
@@ -151,9 +153,9 @@ struct dem {	int min_north;
 		int max_west;
 		int max_el;
 		int min_el;
-		short data[IPPD][IPPD];
-		unsigned char mask[IPPD][IPPD];
-		unsigned char signal[IPPD][IPPD];
+		short data[IPPDX][IPPDY];
+		unsigned char mask[IPPDX][IPPDY];
+		unsigned char signal[IPPDX][IPPDY];
            }	dem[MAXPAGES];
 
 struct LR {	double eps_dielect; 
@@ -319,10 +321,10 @@ int PutMask(double lat, double lon, int value)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
+		x=(int)rint(ppdx*(lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -351,10 +353,10 @@ int OrMask(double lat, double lon, int value)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
+		x=(int)rint(ppdx*(lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -388,10 +390,10 @@ int PutSignal(double lat, double lon, unsigned char signal)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
+		x=(int)rint(ppdx*(lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -418,10 +420,10 @@ unsigned char GetSignal(double lat, double lon)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
+		x=(int)rint(ppdx*(lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -445,10 +447,10 @@ double GetElevation(struct site location)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(location.lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,location.lon)));
+		x=(int)rint(ppdx*(location.lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,location.lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -474,10 +476,10 @@ int AddElevation(double lat, double lon, double height)
 
 	for (indx=0, found=0; indx<MAXPAGES && found==0;)
 	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
+		x=(int)rint(ppdx*(lat-dem[indx].min_north));
+		y=mpiy-(int)rint(ppdy*(LonDiff(dem[indx].max_west,lon)));
 
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
+		if (x>=0 && x<=mpix && y>=0 && y<=mpiy)
 			found=1;
 		else
 			indx++;
@@ -599,10 +601,10 @@ void ReadPath(struct site source, struct site destination)
 	lat2=destination.lat*DEG2RAD;
 	lon2=destination.lon*DEG2RAD;
 
-	if (ppd==1200.0)
+	if (ppdy==1200.0)
 		samples_per_radian=68755.0;
 
-	if (ppd==3600.0)
+	if (ppdy==3600.0)
 		samples_per_radian=206265.0;
 
 	azimuth=Azimuth(source,destination)*DEG2RAD;
@@ -921,15 +923,15 @@ void PlaceMarker(struct site location)
 	lat=location.lat;
 	lon=location.lon;
 
-	if (lat<xmax && lat>=xmin && (LonDiff(lon,ymax)<=0.0) && (LonDiff(lon,ymin)>=dpp))
+	if (lat<xmax && lat>=xmin && (LonDiff(lon,ymax)<=0.0) && (LonDiff(lon,ymin)>=dppy))
 	{
-		p1=1.0/ppd;
-		p3=3.0/ppd;
-		p6=6.0/ppd;
-		p8=8.0/ppd;
-		p12=12.0/ppd;
-		p16=16.0/ppd;
-		p24=24.0/ppd;
+		p1=1.0/ppdy;
+		p3=3.0/ppdy;
+		p6=6.0/ppdy;
+		p8=8.0/ppdy;
+		p12=12.0/ppdy;
+		p16=16.0/ppdy;
+		p24=24.0/ppdy;
 
 		ok2print=0;
 		occupied=0;
@@ -937,7 +939,7 @@ void PlaceMarker(struct site location)
 		/* Is Marker Position Clear Of Text Or Other Markers? */
 
 		for (a=0, x=lat-p3; (x<=xmax && x>=xmin && a<7); x+=p1, a++)
-			for (b=0, y=lon-p3; (LonDiff(y,ymax)<=0.0) && (LonDiff(y,ymin)>=dpp) && b<7; y+=p1, b++)
+			for (b=0, y=lon-p3; (LonDiff(y,ymax)<=0.0) && (LonDiff(y,ymin)>=dppy) && b<7; y+=p1, b++)
 				occupied|=(GetMask(x,y)&2);
 
 		if (occupied==0)
@@ -949,7 +951,7 @@ void PlaceMarker(struct site location)
 
 			label_length=p1*(double)(strlen(location.name)<<3);
 
-			if ((LonDiff(lon+label_length,ymax)<=0.0) && (LonDiff(lon-label_length,ymin)>=dpp))
+			if ((LonDiff(lon+label_length,ymax)<=0.0) && (LonDiff(lon-label_length,ymin)>=dppy))
 			{
 				/* Default: Centered Text */
 
@@ -1014,7 +1016,7 @@ void PlaceMarker(struct site location)
 
 			if (ok2print==0)
 			{
-				if (LonDiff(lon-label_length,ymin)>=dpp)
+				if (LonDiff(lon-label_length,ymin)>=dppy)
 				{
 					/* Position Text To The
 					   Right Of The Marker */
@@ -1105,7 +1107,7 @@ void PlaceMarker(struct site location)
 				   On Location Specified */
 
 				for (a=0, x=lat-p3; (x<=xmax && x>=xmin && a<7); x+=p1, a++)
-					for (b=0, y=lon-p3; (LonDiff(y,ymax)<=0.0) && (LonDiff(y,ymin)>=dpp) && b<7; y+=p1, b++)
+					for (b=0, y=lon-p3; (LonDiff(y,ymax)<=0.0) && (LonDiff(y,ymin)>=dppy) && b<7; y+=p1, b++)
 						OrMask(x,y,2);
 			}
 		}
@@ -1719,8 +1721,8 @@ int LoadSDF_SDF(char *name)
 			fgets(line,19,fd);
 			sscanf(line,"%d",&dem[indx].max_north);
 
-			for (x=0; x<ippd; x++)
-				for (y=0; y<ippd; y++)
+			for (x=0; x<1800; x++)
+				for (y=0; y<ippdy; y++)
 				{
 					fgets(line,19,fd);
 					data=atoi(line);
@@ -1947,8 +1949,8 @@ int LoadSDF_BZ(char *name)
 			sscanf(BZfgets(bzfd,255),"%d",&dem[indx].min_west);
 			sscanf(BZfgets(bzfd,255),"%d",&dem[indx].max_north);
 	
-			for (x=0; x<ippd; x++)
-				for (y=0; y<ippd; y++)
+			for (x=0; x<ippdx; x++)
+				for (y=0; y<ippdy; y++)
 				{
 					string=BZfgets(bzfd,20);
 					data=atoi(string);
@@ -2099,7 +2101,7 @@ char LoadSDF(char *name)
 
 			/* Fill DEM with sea-level topography */
 
-			for (x=0; x<ippd; x++)
+			for (x=0; x<1800; x++)
 				for (y=0; y<ippd; y++)
 				{
 		    			dem[indx].data[x][y]=0;
@@ -2324,7 +2326,7 @@ void LoadUDT(char *filename)
 			}
 
 			if (height>0.0)
-				fprintf(fd2,"%d, %d, %f\n",(int)rint(latitude/dpp), (int)rint(longitude/dpp), height);
+				fprintf(fd2,"%d, %d, %f\n",(int)rint(latitude/dppx), (int)rint(longitude/dppy), height);
 
 			fgets(input,78,fd1);
 
@@ -2374,7 +2376,7 @@ void LoadUDT(char *filename)
 			} while (feof(fd2)==0 && z==0);
 
 			if (z==0)  /* No duplicate found */
-				AddElevation(xpix*dpp, ypix*dpp, height);
+				AddElevation(xpix*dppx, ypix*dppy, height);
 
 			fscanf(fd1,"%d, %d, %lf", &xpix, &ypix, &height);
 			y++;
@@ -3056,14 +3058,14 @@ void PlotLOSMap(struct site source, double altitude)
 	/* th=pixels/degree divided by 64 loops per
 	   progress indicator symbol (.oOo) printed. */
 	
-	th=ppd/64.0;
+	th=ppdx/64.0;
 
 	z=(int)(th*ReduceAngle(max_west-min_west));
 
-	minwest=dpp+(double)min_west;
-	maxnorth=(double)max_north-dpp;
+	minwest=dppy+(double)min_west;
+	maxnorth=(double)max_north-dppx;
 
-	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dppy*(double)y))
 	{
 		if (lon>=360.0)
 			lon-=360.0;
@@ -3094,7 +3096,7 @@ void PlotLOSMap(struct site source, double altitude)
 	
 	z=(int)(th*(double)(max_north-min_north));
 
-	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dpp*(double)y))
+	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dppy*(double)y))
 	{
 		edge.lat=lat;
 		edge.lon=min_west;
@@ -3122,7 +3124,7 @@ void PlotLOSMap(struct site source, double altitude)
 
 	z=(int)(th*ReduceAngle(max_west-min_west));
 
-	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dppy*(double)y))
 	{
 		if (lon>=360.0)
 			lon-=360.0;
@@ -3153,7 +3155,7 @@ void PlotLOSMap(struct site source, double altitude)
 	
 	z=(int)(th*(double)(max_north-min_north));
 
-	for (lat=(double)min_north, x=0, y=0; lat<(double)max_north; y++, lat=(double)min_north+(dpp*(double)y))
+	for (lat=(double)min_north, x=0, y=0; lat<(double)max_north; y++, lat=(double)min_north+(dppy*(double)y))
 	{
 		edge.lat=lat;
 		edge.lon=max_west;
@@ -3213,8 +3215,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	static unsigned char mask_value=1;
 	FILE *fd=NULL;
 
-	minwest=dpp+(double)min_west;
-	maxnorth=(double)max_north-dpp;
+	minwest=dppy+(double)min_west;
+	maxnorth=(double)max_north-dppx;
 
 	symbol[0]='.';
 	symbol[1]='o';
@@ -3259,11 +3261,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	/* th=pixels/degree divided by 64 loops per
 	   progress indicator symbol (.oOo) printed. */
 	
-	th=ppd/64.0;
+	th=ppdx/64.0;
 
 	z=(int)(th*ReduceAngle(max_west-min_west));
 
-	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dppy*(double)y))
 	{
 		if (lon>=360.0)
 			lon-=360.0;
@@ -3294,7 +3296,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	
 	z=(int)(th*(double)(max_north-min_north));
 
-	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dpp*(double)y))
+	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dppy*(double)y))
 	{
 		edge.lat=lat;
 		edge.lon=min_west;
@@ -3322,7 +3324,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
 	z=(int)(th*ReduceAngle(max_west-min_west));
 
-	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dppy*(double)y))
 	{
 		if (lon>=360.0)
 			lon-=360.0;
@@ -3353,7 +3355,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	
 	z=(int)(th*(double)(max_north-min_north));
 
-	for (lat=(double)min_north, x=0, y=0; lat<(double)max_north; y++, lat=(double)min_north+(dpp*(double)y))
+	for (lat=(double)min_north, x=0, y=0; lat<(double)max_north; y++, lat=(double)min_north+(dppy*(double)y))
 	{
 		edge.lat=lat;
 		edge.lon=max_west;
@@ -3889,8 +3891,8 @@ void WritePPM(char *filename, unsigned char geo, unsigned char kml, unsigned cha
 	one_over_gamma=1.0/GAMMA;
 	conversion=255.0/pow((double)(max_elevation-min_elevation),one_over_gamma);
 
-	width=(unsigned)(ippd*ReduceAngle(max_west-min_west));
-	height=(unsigned)(ippd*ReduceAngle(max_north-min_north));
+	width=(unsigned)(ippdx*ReduceAngle(max_west-min_west));
+	height=(unsigned)(ippdy*ReduceAngle(max_north-min_north));
 
 	if (filename[0]==0)
 	{
@@ -3929,12 +3931,12 @@ void WritePPM(char *filename, unsigned char geo, unsigned char kml, unsigned cha
 	geofile[x+4]=0;
 	kmlfile[x+4]=0;
 
-	minwest=((double)min_west)+dpp;
+	minwest=((double)min_west)+dppy;
 
 	if (minwest>360.0)
 		minwest-=360.0;
 
-	north=(double)max_north-dpp;
+	north=(double)max_north-dppx;
 	south=(double)min_north;
 	east=(minwest<180.0?-minwest:360.0-min_west);
 	west=(double)(max_west<180?-max_west:360-max_west);
@@ -4014,19 +4016,19 @@ void WritePPM(char *filename, unsigned char geo, unsigned char kml, unsigned cha
 	fprintf(stdout,"\nWriting \"%s\" (%ux%u pixmap image)... ",mapfile,width,height);
 	fflush(stdout);
 
-	for (y=0, lat=north; y<(int)height; y++, lat=north-(dpp*(double)y))
+	for (y=0, lat=north; y<(int)height; y++, lat=north-(dppy*(double)y))
 	{
-		for (x=0, lon=max_west; x<(int)width; x++, lon=(double)max_west-(dpp*(double)x))
+		for (x=0, lon=max_west; x<(int)width; x++, lon=(double)max_west-(dppx*(double)x))
 		{
 			if (lon<0.0)
 				lon+=360.0;
 
 			for (indx=0, found=0; indx<MAXPAGES && found==0;)
 			{
-				x0=(int)rint(ppd*(lat-(double)dem[indx].min_north));
-				y0=mpi-(int)rint(ppd*(LonDiff((double)dem[indx].max_west,lon)));
+				x0=(int)rint(ppdx*(lat-(double)dem[indx].min_north));
+				y0=mpiy-(int)rint(ppdy*(LonDiff((double)dem[indx].max_west,lon)));
 
-				if (x0>=0 && x0<=mpi && y0>=0 && y0<=mpi)
+				if (x0>=0 && x0<=mpix && y0>=0 && y0<=mpiy)
 					found=1;
 				else
 					indx++;
@@ -4174,8 +4176,8 @@ void WritePPMLR(char *filename, unsigned char geo, unsigned char kml, unsigned c
 	one_over_gamma=1.0/GAMMA;
 	conversion=255.0/pow((double)(max_elevation-min_elevation),one_over_gamma);
 
-	width=(unsigned)(ippd*ReduceAngle(max_west-min_west));
-	height=(unsigned)(ippd*ReduceAngle(max_north-min_north));
+	width=(unsigned)(ippdx*ReduceAngle(max_west-min_west));
+	height=(unsigned)(ippdy*ReduceAngle(max_north-min_north));
 
 	LoadLossColors(xmtr[0]);
 
@@ -4230,17 +4232,17 @@ void WritePPMLR(char *filename, unsigned char geo, unsigned char kml, unsigned c
 	ckfile[x+6]='m';
 	ckfile[x+7]=0;
 
-	minwest=((double)min_west)+dpp;
+	minwest=((double)min_west)+dppy;
 
 	if (minwest>360.0)
 		minwest-=360.0;
 
-	north=(double)max_north-dpp;
+	north=(double)max_north-dppx;
 
 	if (kml || geo)
 		south=(double)min_north;	/* No bottom legend */
 	else
-		south=(double)min_north-(30.0/ppd); /* 30 pixels for bottom legend */
+		south=(double)min_north-(30.0/ppdx); /* 30 pixels for bottom legend */
 
 	east=(minwest<180.0?-minwest:360.0-min_west);
 	west=(double)(max_west<180?-max_west:360-max_west);
@@ -4348,19 +4350,19 @@ void WritePPMLR(char *filename, unsigned char geo, unsigned char kml, unsigned c
 
 	fflush(stdout);
 
-	for (y=0, lat=north; y<(int)height; y++, lat=north-(dpp*(double)y))
+	for (y=0, lat=north; y<(int)height; y++, lat=north-(dppy*(double)y))
 	{
-		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dpp*(double)x))
+		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dppx*(double)x))
 		{
 			if (lon<0.0)
 				lon+=360.0;
 
 			for (indx=0, found=0; indx<MAXPAGES && found==0;)
 			{
-				x0=(int)rint(ppd*(lat-(double)dem[indx].min_north));
-				y0=mpi-(int)rint(ppd*(LonDiff((double)dem[indx].max_west,lon)));
+				x0=(int)rint(ppdx*(lat-(double)dem[indx].min_north));
+				y0=mpiy-(int)rint(ppdy*(LonDiff((double)dem[indx].max_west,lon)));
 
-				if (x0>=0 && x0<=mpi && y0>=0 && y0<=mpi)
+				if (x0>=0 && x0<=mpix && y0>=0 && y0<=mpiy)
 					found=1;
 				else
 					indx++;
@@ -4653,8 +4655,8 @@ void WritePPMSS(char *filename, unsigned char geo, unsigned char kml, unsigned c
 	one_over_gamma=1.0/GAMMA;
 	conversion=255.0/pow((double)(max_elevation-min_elevation),one_over_gamma);
 
-	width=(unsigned)(ippd*ReduceAngle(max_west-min_west));
-	height=(unsigned)(ippd*ReduceAngle(max_north-min_north));
+	width=(unsigned)(ippdx*ReduceAngle(max_west-min_west));
+	height=(unsigned)(ippdy*ReduceAngle(max_north-min_north));
 
 	LoadSignalColors(xmtr[0]);
 
@@ -4708,12 +4710,12 @@ void WritePPMSS(char *filename, unsigned char geo, unsigned char kml, unsigned c
 	ckfile[x+6]='m';
 	ckfile[x+7]=0;
 
-	minwest=((double)min_west)+dpp;
+	minwest=((double)min_west)+dppy;
 
 	if (minwest>360.0)
 		minwest-=360.0;
 
-	north=(double)max_north-dpp;
+	north=(double)max_north-dppx;
 
 	if (kml || geo)
 		south=(double)min_north;	/* No bottom legend */
@@ -4826,19 +4828,19 @@ void WritePPMSS(char *filename, unsigned char geo, unsigned char kml, unsigned c
 
 	fflush(stdout);
 
-	for (y=0, lat=north; y<(int)height; y++, lat=north-(dpp*(double)y))
+	for (y=0, lat=north; y<(int)height; y++, lat=north-(dppy*(double)y))
 	{
-		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dpp*(double)x))
+		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dppx*(double)x))
 		{
 			if (lon<0.0)
 				lon+=360.0;
 
 			for (indx=0, found=0; indx<MAXPAGES && found==0;)
 			{
-				x0=(int)rint(ppd*(lat-(double)dem[indx].min_north));
-				y0=mpi-(int)rint(ppd*(LonDiff((double)dem[indx].max_west,lon)));
+				x0=(int)rint(ppdx*(lat-(double)dem[indx].min_north));
+				y0=mpiy-(int)rint(ppdy*(LonDiff((double)dem[indx].max_west,lon)));
 
-				if (x0>=0 && x0<=mpi && y0>=0 && y0<=mpi)
+				if (x0>=0 && x0<=mpix && y0>=0 && y0<=mpiy)
 					found=1;
 				else
 					indx++;
@@ -5167,8 +5169,8 @@ void WritePPMDBM(char *filename, unsigned char geo, unsigned char kml, unsigned 
 	one_over_gamma=1.0/GAMMA;
 	conversion=255.0/pow((double)(max_elevation-min_elevation),one_over_gamma);
 
-	width=(unsigned)(ippd*ReduceAngle(max_west-min_west));
-	height=(unsigned)(ippd*ReduceAngle(max_north-min_north));
+	width=(unsigned)(ippdx*ReduceAngle(max_west-min_west));
+	height=(unsigned)(ippdy*ReduceAngle(max_north-min_north));
 
 	LoadDBMColors(xmtr[0]);
 
@@ -5222,17 +5224,17 @@ void WritePPMDBM(char *filename, unsigned char geo, unsigned char kml, unsigned 
 	ckfile[x+6]='m';
 	ckfile[x+7]=0;
 
-	minwest=((double)min_west)+dpp;
+	minwest=((double)min_west)+dppy;
 
 	if (minwest>360.0)
 		minwest-=360.0;
 
-	north=(double)max_north-dpp;
+	north=(double)max_north-dppx;
 
 	if (kml || geo)
 		south=(double)min_north;	/* No bottom legend */
 	else
-		south=(double)min_north-(30.0/ppd);	/* 30 pixels for bottom legend */
+		south=(double)min_north-(30.0/ppdx);	/* 30 pixels for bottom legend */
 
 	east=(minwest<180.0?-minwest:360.0-min_west);
 	west=(double)(max_west<180?-max_west:360-max_west);
@@ -5340,19 +5342,19 @@ void WritePPMDBM(char *filename, unsigned char geo, unsigned char kml, unsigned 
 
 	fflush(stdout);
 
-	for (y=0, lat=north; y<(int)height; y++, lat=north-(dpp*(double)y))
+	for (y=0, lat=north; y<(int)height; y++, lat=north-(dppy*(double)y))
 	{
-		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dpp*(double)x))
+		for (x=0, lon=max_west; x<(int)width; x++, lon=max_west-(dppx*(double)x))
 		{
 			if (lon<0.0)
 				lon+=360.0;
 
 			for (indx=0, found=0; indx<MAXPAGES && found==0;)
 			{
-				x0=(int)rint(ppd*(lat-(double)dem[indx].min_north));
-				y0=mpi-(int)rint(ppd*(LonDiff((double)dem[indx].max_west,lon)));
+				x0=(int)rint(ppdx*(lat-(double)dem[indx].min_north));
+				y0=mpix-(int)rint(ppdy*(LonDiff((double)dem[indx].max_west,lon)));
 
-				if (x0>=0 && x0<=mpi && y0>=0 && y0<=mpi)
+				if (x0>=0 && x0<=mpix && y0>=0 && y0<=mpiy)
 					found=1;
 				else
 					indx++;
@@ -7406,7 +7408,7 @@ void LoadTopoData(int max_lon, int min_lon, int max_lat, int min_lat)
 				while (ymax>=360)
 					ymax-=360;
 
-				if (ippd==3600)
+				if (ippdy==3600)
 					snprintf(string,19,"%d:%d:%d:%d-hd",x, x+1, ymin, ymax);
 				else
 					snprintf(string,16,"%d:%d:%d:%d",x, x+1, ymin, ymax);
@@ -7435,7 +7437,7 @@ void LoadTopoData(int max_lon, int min_lon, int max_lat, int min_lat)
 				while (ymax>=360)
 					ymax-=360;
 
-				if (ippd==3600)
+				if (ippdy==3600)
 					snprintf(string,19,"%d:%d:%d:%d-hd",x, x+1, ymin, ymax);
 				else
 					snprintf(string,16,"%d:%d:%d:%d",x, x+1, ymin, ymax);
@@ -7901,10 +7903,15 @@ int main(int argc, char *argv[])
 	smooth_contours=0;
 	earthradius=EARTHRADIUS;
 
-	ippd=IPPD;		/* pixels per degree (integer) */
-	ppd=(double)ippd;	/* pixels per degree (double)  */
-	dpp=1.0/ppd;		/* degrees per pixel */
-	mpi=ippd-1;		/* maximum pixel index per degree */
+	ippdx=IPPDX;		/* pixels per degree (integer) */
+	ppdx=(double)ippdx;	/* pixels per degree (double)  */
+	dppx=1.0/ppdx;		/* degrees per pixel */
+	mpix=ippdx-1;		/* maximum pixel index per degree */
+
+	ippdy=IPPDY;		/* pixels per degree (integer) */
+	ppdy=(double)ippdy;	/* pixels per degree (double)  */
+	dppy=1.0/ppdy;		/* degrees per pixel */
+	mpiy=ippdy-1;		/* maximum pixel index per degree */
 
 	sprintf(header,"\n\t\t--==[ Welcome To %s v%s ]==--\n\n", splat_name, splat_version);
 
